@@ -1,5 +1,4 @@
- // Signup.js
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Signup.css';
@@ -10,22 +9,30 @@ function Signup() {
     const [mobile, setMobile] = useState('');
     const [password, setPassword] = useState('');
     const [retypePassword, setRetypePassword] = useState('');
+    const [error, setError] = useState(null);  // State to store error message
+    const [loading, setLoading] = useState(false); // State to handle loading
 
     const handleSignup = async (e) => {
         e.preventDefault(); // Prevent the default form submission
 
+        setError(null);  // Reset error state
+        setLoading(true);  // Show loading state
+
         // Check if passwords match
         if (password !== retypePassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
+            setLoading(false);
             return;
         }
 
         try {
-            // Send signup data to backend
-            const response = await axios.post('http://stockora-api.vercel.app/api/signup', {
+            // Send signup data to backend using HTTPS
+            const response = await axios.post('https://stockora-api.vercel.app/api/signup', {
                 name,
                 mobile_no: mobile,
                 password,
+            }, {
+                timeout: 10000,  // Set a timeout for the request (10 seconds)
             });
 
             // If backend signup is successful (status 200), redirect with query params
@@ -36,12 +43,20 @@ function Signup() {
                     password,
                 }).toString();
 
-                // Redirect to the target URL with the query parameters
+                // Redirect to the target URL with query parameters
                 window.location.href = `https://trading-dashboard-frontend.vercel.app/?${queryParams}`;
+            } else {
+                setError('Signup failed, please try again.');
             }
         } catch (error) {
             console.error('Error signing up:', error);
-            // Handle error appropriately (e.g., show a message to the user)
+            if (error.response && error.response.status === 500) {
+                setError('Server error, please try again later.');
+            } else {
+                setError('Network error, please check your connection.');
+            }
+        } finally {
+            setLoading(false); // Stop loading state
         }
     };
 
@@ -98,8 +113,11 @@ function Signup() {
                                 required
                             />
                         </div>
+                        {error && <p className="error-message">{error}</p>} {/* Display error */}
                         <div className="form-actions">
-                            <button type="submit" className="btn btn-orange">Sign Up</button>
+                            <button type="submit" className="btn btn-orange" disabled={loading}>
+                                {loading ? 'Signing Up...' : 'Sign Up'}
+                            </button>
                         </div>
                     </form>
                     <div className="additional-links">
