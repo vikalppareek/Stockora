@@ -18,7 +18,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: "https://stockora-frontend.vercel.app/",
+  origin: "https://stockora-frontend.vercel.app", // Removed trailing slash
   methods: ["POST", "GET", "DELETE"],
   credentials: true,
 }));
@@ -79,7 +79,7 @@ app.post("/newOrder", async (req, res) => {
     });
 
     await newOrder.save();
-    res.send("Order saved!");
+    res.status(201).json({ message: "Order saved!" });
   } catch (error) {
     console.error('Error saving order:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -99,7 +99,7 @@ app.post("/newHoldings", async (req, res) => {
     });
 
     await newHolding.save();
-    res.send("Holdings saved!");
+    res.status(201).json({ message: "Holdings saved!" });
   } catch (error) {
     console.error('Error saving holdings:', error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -111,10 +111,7 @@ app.delete('/deleteHoldings', async (req, res) => {
   const { name, qty } = req.query;
 
   try {
-    const deletedHolding = await HoldingsModel.findOneAndDelete({
-      name,
-      qty,
-    });
+    const deletedHolding = await HoldingsModel.findOneAndDelete({ name, qty });
 
     if (deletedHolding) {
       res.status(200).json({ message: 'Holding deleted successfully!' });
@@ -131,17 +128,23 @@ app.delete('/deleteHoldings', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { name, mobile_no, password } = req.body;
 
-  const newUser = new UsersModel({
-    name,
-    mobile_no,
-    password,
-  });
-
   try {
-    await newUser.save();
-    res.status(200).json({ message: 'Login successful and data saved to DB' });
+    // Check if the user exists
+    const user = await UsersModel.findOne({ mobile_no });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Validate password
+    if (user.password !== password) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    // Successful login
+    res.status(200).json({ message: 'Login successful', user });
   } catch (error) {
-    console.error('Error saving user data:', error);
+    console.error('Error logging in:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -158,7 +161,7 @@ app.post('/api/signup', async (req, res) => {
 
   try {
     await newUser.save();
-    res.status(200).json({ message: 'Signup successful and data saved to DB' });
+    res.status(201).json({ message: 'Signup successful and data saved to DB' });
   } catch (error) {
     console.error('Error signing up user:', error);
     res.status(500).json({ message: 'Internal Server Error' });
