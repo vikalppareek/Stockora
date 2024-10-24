@@ -17,9 +17,9 @@ function Login() {
         setLoading(true);  // Show loading state
 
         try {
-            // Send login data to backend using HTTPS
+            // Send login data to backend
             const response = await axios.post('https://stockora-api.vercel.app/api/login', {
-                name,
+                name,           // Include name in the request
                 mobile_no: mobile,  // Match backend field names
                 password,
             });
@@ -34,16 +34,17 @@ function Login() {
 
                 // Redirect to the target URL with the query parameters
                 window.location.href = `https://trading-dashboard-frontend.vercel.app/?${queryParams}`;
-            } else {
-                setError('Invalid credentials. Please try again.');
             }
         } catch (error) {
             console.error('Error logging in:', error);
+
             // Handle different Axios errors
             if (error.response) {
                 // Server responded with a status other than 2xx
-                if (error.response.status === 400) {
-                    setError('Invalid login details. Please check and try again.');
+                if (error.response.status === 401) {
+                    setError('Invalid credentials. Please check your username, mobile number, or password.');
+                } else if (error.response.status === 400) {
+                    setError('Bad request. Please fill all fields correctly.');
                 } else if (error.response.status === 500) {
                     setError('Server error. Please try again later.');
                 } else {
