@@ -8,19 +8,17 @@ function Login() {
     const [name, setName] = useState('');
     const [mobile, setMobile] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);  // To handle error messages
-    const [loading, setLoading] = useState(false);  // Loading state
+    const [error, setError] = useState(''); // State to hold error messages
 
     const handleLogin = async (e) => {
-        e.preventDefault();  // Prevent default form submission
-        setError(null);  // Reset error state
-        setLoading(true);  // Show loading state
+        e.preventDefault(); // Prevent the default form submission
+        setError(''); // Clear previous errors
 
         try {
-            // Send login data to backend
+            // Send data to backend
             const response = await axios.post('https://stockora-api.vercel.app/api/login', {
-                name,           // Include name in the request
-                mobile_no: mobile,  // Match backend field names
+                name,
+                mobile_no: mobile, // Match the backend field names
                 password,
             });
 
@@ -38,9 +36,9 @@ function Login() {
         } catch (error) {
             console.error('Error logging in:', error);
 
-            // Handle different Axios errors
+            // Handle error appropriately
             if (error.response) {
-                // Server responded with a status other than 2xx
+                console.log('Backend response data:', error.response.data); // Log the response data
                 if (error.response.status === 401) {
                     setError('Invalid credentials. Please check your username, mobile number, or password.');
                 } else if (error.response.status === 400) {
@@ -51,14 +49,10 @@ function Login() {
                     setError('An unexpected error occurred. Please try again.');
                 }
             } else if (error.request) {
-                // No response was received from the server
                 setError('Network error. Please check your internet connection.');
             } else {
-                // Something else caused an error
                 setError('An error occurred. Please try again.');
             }
-        } finally {
-            setLoading(false);  // Hide loading state
         }
     };
 
@@ -72,6 +66,7 @@ function Login() {
             <div className="content">
                 <div className="form-container">
                     <h2 className="form-title">Login to Stockora</h2>
+                    {error && <div className="error-message">{error}</div>} {/* Display error message */}
                     <form onSubmit={handleLogin}>
                         <div className="form-group">
                             <input
@@ -105,11 +100,8 @@ function Login() {
                                 required
                             />
                         </div>
-                        {error && <p className="error-message">{error}</p>}  {/* Display error */}
                         <div className="form-actions">
-                            <button type="submit" className="btn btn-blue" disabled={loading}>
-                                {loading ? 'Logging In...' : 'Login'}
-                            </button>
+                            <button type="submit" className="btn btn-blue">Login</button>
                         </div>
                     </form>
                     <div className="additional-links">
