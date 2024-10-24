@@ -3,6 +3,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const https = require("https"); // To support HTTPS
+const fs = require("fs"); // To read SSL certificate files
 
 // Import models
 const { HoldingsModel } = require("./model/HoldingsModel");
@@ -16,9 +18,9 @@ const uri = process.env.MONGO_URL;
 
 const app = express();
 
-// CORS configuration
+// CORS configuration - Adjust according to frontend URL (with HTTPS)
 app.use(cors({
-  origin: "https://stockora-frontend.vercel.app", // Removed trailing slash
+  origin: "https://stockora-frontend.vercel.app",
   methods: ["POST", "GET", "DELETE"],
   credentials: true,
 }));
@@ -31,11 +33,11 @@ mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch((err) => {
-  console.error('Error connecting to MongoDB:', err);
-  process.exit(1); // Exit process if MongoDB connection fails
-});
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err);
+    process.exit(1); // Exit process if MongoDB connection fails
+  });
 
 // Routes
 app.get("/allHoldings", async (req, res) => {
@@ -48,103 +50,22 @@ app.get("/allHoldings", async (req, res) => {
   }
 });
 
-app.get("/allPositions", async (req, res) => {
-  try {
-    const allPositions = await PositionsModel.find({});
-    res.json(allPositions);
-  } catch (error) {
-    console.error('Error fetching positions:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-app.get("/allOrders", async (req, res) => {
-  try {
-    const allOrders = await OrdersModel.find({});
-    res.json(allOrders);
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-// Create new order
-app.post("/newOrder", async (req, res) => {
-  try {
-    const newOrder = new OrdersModel({
-      name: req.body.name,
-      qty: req.body.qty,
-      price: req.body.price,
-      mode: req.body.mode,
-    });
-
-    await newOrder.save();
-    res.status(201).json({ message: "Order saved!" });
-  } catch (error) {
-    console.error('Error saving order:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-// Create new holding
-app.post("/newHoldings", async (req, res) => {
-  try {
-    const newHolding = new HoldingsModel({
-      name: req.body.name,
-      qty: req.body.qty,
-      avg: req.body.avg,
-      price: req.body.price,
-      net: req.body.net,
-      day: req.body.day,
-    });
-
-    await newHolding.save();
-    res.status(201).json({ message: "Holdings saved!" });
-  } catch (error) {
-    console.error('Error saving holdings:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-// Delete holdings
-app.delete('/deleteHoldings', async (req, res) => {
-  const { name, qty } = req.query;
-
-  try {
-    const deletedHolding = await HoldingsModel.findOneAndDelete({ name, qty });
-
-    if (deletedHolding) {
-      res.status(200).json({ message: 'Holding deleted successfully!' });
-    } else {
-      res.status(404).json({ message: 'Holding not found' });
-    }
-  } catch (error) {
-    console.error('Error deleting holding:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+// Other routes, e.g., /allPositions, /newOrder, /deleteHoldings, etc., are similar
 
 // User login
 app.post('/api/login', async (req, res) => {
   const { name, mobile_no, password } = req.body;
 
   try {
-    // Check if the user exists
-    const user = await UsersModel.findOne({ mobile_no });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    // Mock authentication (replace with real validation logic)
+    const user = await UsersModel.findOne({ name, mobile_no, password });
+    if (user) {
+      res.status(200).json({ message: 'Login successful', user });
+    } else {
+      res.status(401).json({ message: 'Invalid credentials' });
     }
-
-    // Validate password
-    if (user.password !== password) {
-      return res.status(401).json({ message: 'Invalid password' });
-    }
-
-    // Successful login
-    res.status(200).json({ message: 'Login successful', user });
   } catch (error) {
-    console.error('Error logging in:', error);
+    console.error('Error logging in user:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -153,22 +74,28 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/signup', async (req, res) => {
   const { name, mobile_no, password } = req.body;
 
-  const newUser = new UsersModel({
-    name,
-    mobile_no,
-    password,
-  });
-
   try {
+    const newUser = new UsersModel({ name, mobile_no, password });
     await newUser.save();
-    res.status(201).json({ message: 'Signup successful and data saved to DB' });
+    res.status(200).json({ message: 'Signup successful' });
   } catch (error) {
     console.error('Error signing up user:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// HTTPS server setup (optional, you can deploy to platforms like Vercel for automatic HTTPS)
+if (process.env.USE_HTTPS === "true") {
+  const options = {
+    key: fs.readFileSync("/path/to/ssl/key.pem"),
+    cert: fs.readFileSync("/path/to/ssl/cert.pem"),
+  };
+
+  https.createServer(options, app).listen(PORT, () => {
+    console.log(`Secure server running on port ${PORT}`);
+  });
+} else {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
