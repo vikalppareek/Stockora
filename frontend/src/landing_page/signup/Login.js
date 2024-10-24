@@ -11,32 +11,33 @@ function Login() {
     const [password, setPassword] = useState('');
 
     const handleLogin = async (e) => {
-        e.preventDefault(); // Prevent the default form submission
+    e.preventDefault(); // Prevent the default form submission
 
-        try {
-            // Send data to backend
-            const response = await axios.post('http://stockora-api.vercel.app/api/login', {
+    try {
+        // Send data to backend
+        const response = await axios.post('http://stockora-api.vercel.app/api/login', {
+            name,
+            mobile_no: mobile, // Match the backend field names
+            password,
+        });
+
+        // If backend login is successful (status 200), navigate to the target URL with the query params
+        if (response.status === 200) {
+            // Create query params
+            const queryParams = new URLSearchParams({
                 name,
-                mobile_no: mobile, // Match the backend field names
+                mobile,
                 password,
-            });
+            }).toString();
 
-            // If backend login is successful (status 200), redirect with query params
-            if (response.status === 200) {
-                const queryParams = new URLSearchParams({
-                    name,
-                    mobile,
-                    password,
-                }).toString();
-
-                // Redirect to the target URL with the query parameters
-                window.location.href = `https://trading-dashboard-frontend.vercel.app/?${queryParams}`;
-            }
-        } catch (error) {
-            console.error('Error logging in:', error);
-            // Handle error appropriately (e.g., show a message to the user)
+            // Redirect using navigate with query params
+            navigate(`/dashboard?${queryParams}`);
         }
-    };
+    } catch (error) {
+        console.error('Error logging in:', error);
+        // Handle error appropriately (e.g., show a message to the user)
+    }
+};
 
     return (
         <div className="container-login">
