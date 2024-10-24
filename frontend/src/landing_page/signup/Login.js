@@ -15,12 +15,11 @@ function Login() {
 
     try {
         // Send data to backend
-        const response = await axios.post('http://stockora-api.vercel.app/api/login', {
-            name,
-            mobile_no: mobile, // Match the backend field names
-            password,
-        });
-
+const response = await axios.post('https://stockora-api.vercel.app/api/login', {
+    name,
+    mobile_no: mobile, // Match the backend field names
+    password,
+});
         // If backend login is successful (status 200), navigate to the target URL with the query params
         if (response.status === 200) {
             // Create query params
