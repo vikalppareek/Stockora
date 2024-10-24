@@ -18,7 +18,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: "https://",
+  origin: "https://stockora-frontend.vercel.app/",
   methods: ["POST", "GET", "DELETE"],
   credentials: true,
 }));
