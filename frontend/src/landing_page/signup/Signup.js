@@ -22,7 +22,7 @@ function Signup() {
 
         try {
             // Send signup data to backend
-            const response = await axios.post('https://stockora-api.vercel.app/api/signup', {
+            const response = await axios.post('http://stockora-api.vercel.app/api/signup', {
                 name,
                 mobile_no: mobile,
                 password,
