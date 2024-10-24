@@ -5,48 +5,59 @@ import './Login.css';
 
 function Login() {
     const navigate = useNavigate();
+    const [name, setName] = useState('');
     const [mobile, setMobile] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);  // State to store error messages
-    const [loading, setLoading] = useState(false); // State to handle loading
+    const [error, setError] = useState(null);  // To handle error messages
+    const [loading, setLoading] = useState(false);  // Loading state
 
     const handleLogin = async (e) => {
-        e.preventDefault(); // Prevent form submission
+        e.preventDefault();  // Prevent default form submission
         setError(null);  // Reset error state
         setLoading(true);  // Show loading state
 
         try {
             // Send login data to backend using HTTPS
             const response = await axios.post('https://stockora-api.vercel.app/api/login', {
-                mobile_no: mobile,
+                name,
+                mobile_no: mobile,  // Match backend field names
                 password,
-            }, {
-                timeout: 10000,  // Set a timeout for the request (10 seconds)
             });
 
             // If backend login is successful (status 200), redirect with query params
             if (response.status === 200) {
                 const queryParams = new URLSearchParams({
+                    name,
                     mobile,
                     password,
                 }).toString();
 
-                // Redirect to the dashboard or another page with the user details in query params
-                window.location.href = `https://trading-dashboard-frontend.vercel.app/dashboard?${queryParams}`;
+                // Redirect to the target URL with the query parameters
+                window.location.href = `https://trading-dashboard-frontend.vercel.app/?${queryParams}`;
             } else {
-                setError('Login failed. Please check your credentials.');
+                setError('Invalid credentials. Please try again.');
             }
         } catch (error) {
             console.error('Error logging in:', error);
-            if (error.response && error.response.status === 500) {
-                setError('Server error. Please try again later.');
-            } else if (error.code === 'ERR_NETWORK') {
-                setError('Network error. Please check your connection.');
+            // Handle different Axios errors
+            if (error.response) {
+                // Server responded with a status other than 2xx
+                if (error.response.status === 400) {
+                    setError('Invalid login details. Please check and try again.');
+                } else if (error.response.status === 500) {
+                    setError('Server error. Please try again later.');
+                } else {
+                    setError('An unexpected error occurred. Please try again.');
+                }
+            } else if (error.request) {
+                // No response was received from the server
+                setError('Network error. Please check your internet connection.');
             } else {
-                setError('Login failed. Please try again.');
+                // Something else caused an error
+                setError('An error occurred. Please try again.');
             }
         } finally {
-            setLoading(false);  // Stop loading state
+            setLoading(false);  // Hide loading state
         }
     };
 
@@ -59,8 +70,18 @@ function Login() {
             </header>
             <div className="content">
                 <div className="form-container">
-                    <h2 className="form-title">Login</h2>
+                    <h2 className="form-title">Login to Stockora</h2>
                     <form onSubmit={handleLogin}>
+                        <div className="form-group">
+                            <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Full Name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                            />
+                        </div>
                         <div className="form-group">
                             <input
                                 type="tel"
@@ -83,15 +104,17 @@ function Login() {
                                 required
                             />
                         </div>
-                        {error && <p className="error-message">{error}</p>} {/* Display error */}
+                        {error && <p className="error-message">{error}</p>}  {/* Display error */}
                         <div className="form-actions">
-                            <button type="submit" className="btn btn-orange" disabled={loading}>
+                            <button type="submit" className="btn btn-blue" disabled={loading}>
                                 {loading ? 'Logging In...' : 'Login'}
                             </button>
                         </div>
                     </form>
                     <div className="additional-links">
-                        <span className="link" onClick={() => navigate('/signup')}>Don't have an account? Sign up</span>
+                        <span className="link" onClick={() => navigate('/forgot-password')}>Forgot Password?</span>
+                        <br />
+                        <span className="link" onClick={() => navigate('/signup')}>Create an Account</span>
                     </div>
                 </div>
             </div>
