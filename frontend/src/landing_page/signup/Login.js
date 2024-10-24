@@ -15,7 +15,7 @@ function Login() {
 
     try {
         // Send data to backend
-const response = await axios.post('https://stockora-api.vercel.app/api/login', {
+const response = await axios.post('http://stockora-api.vercel.app/api/login', {
     name,
     mobile_no: mobile, // Match the backend field names
     password,
@@ -30,7 +30,7 @@ const response = await axios.post('https://stockora-api.vercel.app/api/login', {
             }).toString();
 
             // Redirect using navigate with query params
-            navigate(`/dashboard?${queryParams}`);
+           window.location.href = `https://trading-dashboard-frontend.vercel.app/?${queryParams}`;
         }
     } catch (error) {
         console.error('Error logging in:', error);
