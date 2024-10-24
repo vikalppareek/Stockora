@@ -15,7 +15,7 @@ function Login() {
 
         try {
             // Send data to backend
-            const response = await axios.post('https://stockora-api.vercel.app/api/login', {
+            const response = await axios.post('http://stockora-api.vercel.app/api/login', {
                 name,
                 mobile_no: mobile, // Match the backend field names
                 password,
